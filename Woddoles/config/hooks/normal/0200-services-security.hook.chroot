@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+systemctl mask ModemManager.service avahi-daemon.service 2>/dev/null || true
+ufw default deny incoming
+ufw default allow outgoing
+systemctl enable ufw.service
+systemctl enable zramswap.service 2>/dev/null || true
+systemctl enable apparmor.service 2>/dev/null || true
+systemctl enable NetworkManager.service
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades
