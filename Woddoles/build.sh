@@ -27,7 +27,8 @@ lb config \
 cp -r ../config/package-lists/. config/package-lists/
 cp -r ../config/hooks/.         config/hooks/
 cp -r ../config/includes.chroot/. config/includes.chroot/
+cp -r ../config/includes.chroot/. config/includes.chroot/
+mkdir -p config/includes.chroot/usr/share/pixmaps
 cp ../assets/logo.svg config/includes.chroot/usr/share/pixmaps/woddoles.svg
-
 sudo lb build 2>&1 | tee ../build.log
 echo "ISO gerada: $(ls -1 *.iso)"
