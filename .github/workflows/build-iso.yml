@@ -18,19 +18,27 @@ jobs:
           sudo docker image prune --all --force || true
           df -h /
 
-      - name: Dependências extras
-        run: sudo apt-get update && sudo apt-get install -y debian-archive-keyring
-
-      - name: Gerar ISO
+      - name: Gerar ISO (dentro de um Debian 12)
         run: |
-          DIR=$(dirname "$(find . -name build.sh -not -path './.git/*' | head -n1)")
-          echo "Projeto encontrado em: $DIR"
-          cd "$DIR"
-          chmod +x build.sh config/hooks/normal/*.hook.chroot
-          ./build.sh
-          mkdir -p "$GITHUB_WORKSPACE/out"
-          cp build/*.iso "$GITHUB_WORKSPACE/out/" || true
-          cp build.log "$GITHUB_WORKSPACE/out/" || true
+          docker run --rm --privileged \
+            -e DEBIAN_FRONTEND=noninteractive \
+            -e HOST_UID=$(id -u) -e HOST_GID=$(id -g) \
+            -v "$GITHUB_WORKSPACE:/work" -w /work \
+            debian:bookworm bash -c '
+              set -x
+              apt-get update
+              apt-get install -y sudo ca-certificates live-build
+              DIR=$(dirname "$(find . -name build.sh -not -path "./.git/*" | head -n1)")
+              cd "$DIR"
+              chmod +x build.sh config/hooks/normal/*.hook.chroot
+              ./build.sh
+              RC=$?
+              mkdir -p /work/out
+              cp build/*.iso /work/out/ 2>/dev/null
+              cp build.log /work/out/ 2>/dev/null
+              chown -R $HOST_UID:$HOST_GID /work
+              exit $RC
+            '
 
       - name: Enviar resultado
         if: always()
