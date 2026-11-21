@@ -10,7 +10,7 @@ calamares-settings-debian
 xorg
 xserver-xorg-input-libinput
 xfce4
-xfce4-whisker-menu-plugin
+xfce4-whiskermenu-plugin
 xfce4-notifyd
 xfce4-power-manager
 xfce4-pulseaudio-plugin
