@@ -1,0 +1,41 @@
+name: Build WODDOLES ISO
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Liberar espaço em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+          df -h /
+
+      - name: Dependências extras
+        run: sudo apt-get update && sudo apt-get install -y debian-archive-keyring
+
+      - name: Gerar ISO
+        run: |
+          DIR=$(dirname "$(find . -name build.sh -not -path './.git/*' | head -n1)")
+          echo "Projeto encontrado em: $DIR"
+          cd "$DIR"
+          chmod +x build.sh config/hooks/normal/*.hook.chroot
+          ./build.sh
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp build/*.iso "$GITHUB_WORKSPACE/out/" || true
+          cp build.log "$GITHUB_WORKSPACE/out/" || true
+
+      - name: Enviar resultado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: woddoles-iso
+          path: out/
+          if-no-files-found: warn
