@@ -1,0 +1,94 @@
+#!/bin/sh
+# WODDOLES: painel inferior estilo Windows, tema escuro e papel de parede.
+# Usa /etc/xdg (caminho sem pasta oculta) para valer para qualquer usuário.
+set -e
+X=/etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+mkdir -p "$X" /etc/xdg/xfce4/panel /etc/xdg/autostart
+
+cat > "$X/xfce4-panel.xml" <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-panel" version="1.0">
+  <property name="configver" type="int" value="2"/>
+  <property name="panels" type="array">
+    <value type="int" value="1"/>
+    <property name="dark-mode" type="bool" value="true"/>
+    <property name="panel-1" type="empty">
+      <property name="position" type="string" value="p=8;x=0;y=0"/>
+      <property name="length" type="uint" value="100"/>
+      <property name="position-locked" type="bool" value="true"/>
+      <property name="size" type="uint" value="40"/>
+      <property name="plugin-ids" type="array">
+        <value type="int" value="1"/>
+        <value type="int" value="2"/>
+        <value type="int" value="3"/>
+        <value type="int" value="4"/>
+        <value type="int" value="5"/>
+        <value type="int" value="6"/>
+        <value type="int" value="7"/>
+        <value type="int" value="8"/>
+      </property>
+    </property>
+  </property>
+  <property name="plugins" type="empty">
+    <property name="plugin-1" type="string" value="whiskermenu"/>
+    <property name="plugin-2" type="string" value="tasklist">
+      <property name="grouping" type="uint" value="1"/>
+      <property name="show-labels" type="bool" value="true"/>
+    </property>
+    <property name="plugin-3" type="string" value="separator">
+      <property name="expand" type="bool" value="true"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-4" type="string" value="systray"/>
+    <property name="plugin-5" type="string" value="pulseaudio"/>
+    <property name="plugin-6" type="string" value="power-manager-plugin"/>
+    <property name="plugin-7" type="string" value="clock">
+      <property name="digital-layout" type="uint" value="3"/>
+      <property name="digital-time-format" type="string" value="%H:%M"/>
+      <property name="digital-date-format" type="string" value="%d/%m/%Y"/>
+    </property>
+    <property name="plugin-8" type="string" value="showdesktop"/>
+  </property>
+</channel>
+XML
+cp "$X/xfce4-panel.xml" /etc/xdg/xfce4/panel/default.xml
+
+cat > "$X/xfwm4.xml" <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="use_compositing" type="bool" value="false"/>
+    <property name="theme" type="string" value="Arc-Dark"/>
+    <property name="button_layout" type="string" value="|HMC"/>
+  </property>
+</channel>
+XML
+
+cat > "$X/xsettings.xml" <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xsettings" version="1.0">
+  <property name="Net" type="empty">
+    <property name="ThemeName" type="string" value="Arc-Dark"/>
+    <property name="IconThemeName" type="string" value="Papirus-Dark"/>
+  </property>
+</channel>
+XML
+
+# Papel de parede: aplicado no início da sessão, em todos os monitores
+cat > /usr/local/bin/woddoles-wallpaper <<'SH'
+#!/bin/sh
+sleep 3
+IMG=/usr/share/backgrounds/woddoles/default.svg
+for p in $(xfconf-query -c xfce4-desktop -l 2>/dev/null | grep last-image); do
+  xfconf-query -c xfce4-desktop -p "$p" -s "$IMG"
+done
+SH
+chmod +x /usr/local/bin/woddoles-wallpaper
+
+cat > /etc/xdg/autostart/woddoles-wallpaper.desktop <<'D'
+[Desktop Entry]
+Type=Application
+Name=WODDOLES Wallpaper
+Exec=/usr/local/bin/woddoles-wallpaper
+NoDisplay=true
+D
